@@ -1,9 +1,14 @@
 Done
 -> MoveTo avec check mine
+------
+-> Comportement quand contre mur
+-> refait l'ordre des tests pour l'heuristique
+-----
+-> Ne pas FIRE si une mine devant
 
 Not OK
--> Comportement quand targeted & speed = 1
--> Comportement quand mvt naturel nous envoie vers outside
+-> Comportement quand un autre bateau est devant
+-> Si speed = 0 & bateau devant, ma réponse est FASTER. Il faut être plus sioux.
 
 Not done
 -> Speed > 1

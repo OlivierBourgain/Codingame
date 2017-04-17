@@ -74,7 +74,8 @@ class Player {
 				if (targetedBy != null) System.err.println("is targeted by " + targetedBy);
 
 				boolean againstWall = !ship.nextPos.isInsideMap();
-
+				boolean mineAhead = isMineAhead(ship);
+				
 				Barrel b = closestBarrel(ship, barrels);
 				Ship enemy = closestEnemy(ship, otherShips);
 
@@ -82,7 +83,11 @@ class Player {
 					System.err.println("--> Against wall");
 					String move = getMoveAgainstWall(ship, turn);
 					System.out.println(move);
-				} else if (ship.speed == 0 && targetedBy != null) {
+				} else if (mineAhead) {
+					System.err.println("--> Avoinding mine");
+					if(turn%2 == 0) System.out.println("PORT");
+					else System.out.println("STARBOARD");
+				}else if (ship.speed == 0 && targetedBy != null) {
 					System.err.println("--> Speed = 0 & targeted");
 					System.out.println("FASTER");
 				} else if (ship.speed == 0) {
@@ -219,16 +224,20 @@ class Player {
 		while (!openSet.isEmpty()) {
 			PathNode cur = getBestPathNode(openSet);
 			// System.err.println(" A* Cur = " + cur);
-			if (cur.pos.x == target.x && cur.pos.y == target.y) { return firstMove(cur); }
-
+				
 			openSet.remove(cur);
 			closedSet.add(cur);
 
 			Coord front = frontPos(cur.pos, cur.orientation);
 			Coord back = backPos(cur.pos, cur.orientation);
+
+			if (cur.pos.x == target.x && cur.pos.y == target.y) { return firstMove(cur); }
+			if (front.x == target.x && front.y == target.y) { return firstMove(cur); }
+
 			if (front.isInsideMap() && mineMap[front.x][front.y]) continue;
 			if (back.isInsideMap() && mineMap[back.x][back.y]) continue;
-
+			
+			
 			Coord nextPos = cur.pos.neighbor(cur.orientation);
 			if (!nextPos.isInsideMap()) continue;
 
@@ -241,7 +250,10 @@ class Player {
 			starboard.score(target);
 			nop.score(target);
 
-			if (!closedSet.contains(nop) && !openSet.contains(nop)) openSet.add(nop);
+			if (!closedSet.contains(nop) && !openSet.contains(nop)) {
+
+					openSet.add(nop);
+			}
 			if (!closedSet.contains(port) && !openSet.contains(port)) openSet.add(port);
 			if (!closedSet.contains(starboard) && !openSet.contains(starboard)) openSet.add(starboard);
 		}
@@ -347,6 +359,20 @@ class Player {
 		if (ship.pos.x == MAP_WIDTH - 1 && ship.orientation == 1) return "PORT";
 
 		return (turn % 2 == 0) ? "PORT" : "STARBOARD";
+	}
+	
+	/**
+	 * Renvoie true s'il y a une mine devant
+	 */
+	private static boolean isMineAhead(Ship ship) {
+		Coord center = ship.pos.neighbor(ship.orientation);
+		Coord front = frontPos(center,ship.orientation);
+		Coord frontfront = frontPos(front,ship.orientation);
+		System.err.println("isMineahead, checking " + center + " / " + front + " / " + frontfront);
+		if (center.isInsideMap() && mineMap[center.x][center.y]) return true;
+		if (front.isInsideMap() && mineMap[front.x][front.y]) return true;
+		if (frontfront.isInsideMap() && mineMap[frontfront.x][frontfront.y]) return true;
+		return false;
 	}
 
 	/*****************************************************************
