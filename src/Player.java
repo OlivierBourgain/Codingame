@@ -69,18 +69,24 @@ class Player {
 				System.err.println("==== " + ship);
 				System.err.println("Front " + frontPos(ship));
 				System.err.println("Back " + backPos(ship));
+
 				CannonBall targetedBy = isTargeted(ship, cannonBalls);
 				if (targetedBy != null) System.err.println("is targeted by " + targetedBy);
+
+				boolean againstWall = !ship.nextPos.isInsideMap();
 
 				Barrel b = closestBarrel(ship, barrels);
 				Ship enemy = closestEnemy(ship, otherShips);
 
-				if (ship.speed > 0 && mineAhead(ship, mines)) {
-					System.err.println("/!\\ Mine ahead");
-					if (turn % 2 == 0) System.out.println("PORT");
-					else System.out.println("STARBOARD");
+				if (againstWall) {
+					System.err.println("--> Against wall");
+					String move = getMoveAgainstWall(ship, turn);
+					System.out.println(move);
 				} else if (ship.speed == 0 && targetedBy != null) {
 					System.err.println("--> Speed = 0 & targeted");
+					System.out.println("FASTER");
+				} else if (ship.speed == 0) {
+					System.err.println("--> FASTER");
 					System.out.println("FASTER");
 				} else if (ship.pos.distanceTo(enemy.pos) < 8) {
 					Coord target = target(ship, enemy);
@@ -91,46 +97,14 @@ class Player {
 					System.out.println("MOVE " + enemy.pos);
 				} else {
 					System.err.println("Moving to barrel " + b);
-					if (ship.speed == 0 && ship.nextPos.isInsideMap()) {
-						System.err.println("--> FASTER");
-						System.out.println("FASTER");
-					} else if (!ship.nextPos.isInsideMap()) {
-						System.err.println("--> STARBOARD");
-						System.out.println("STARBOARD");
-					} else {
-						Move m = moveToTarget(ship, b.pos);
-						System.err.println("--> " + m.toString());
-						System.out.println(m.toString());
-					}
+					Move m = moveToTarget(ship, b.pos);
+					System.err.println("--> " + m.toString());
+					System.out.println(m.toString());
 				}
 				System.err.println();
 
 			}
 		}
-	}
-
-	/**
-	 * Return true if there is a mine at the next position of the ship
-	 */
-	private static boolean mineAhead(Ship ship, List<Mine> mines) {
-		return false;
-		/*
-		 * // DOES NOT WORK WELL
-		 * Coord center = ship.pos.neighbor(ship.orientation);
-		 * Coord front = center.neighbor(ship.orientation);
-		 * Coord back = center.neighbor((ship.orientation+3)%6);
-		 * Coord nextFront = front.neighbor(ship.orientation);
-		 * for (Mine mine : mines) {
-		 * for(int orientation = 0; orientation < 6; orientation++) {
-		 * Coord c = mine.pos.neighbor(orientation);
-		 * if (c.equals(center)) return true;
-		 * if (c.equals(front)) return true;
-		 * if (c.equals(back)) return true;
-		 * if (c.equals(nextFront)) return true;
-		 * }
-		 * }
-		 * return false;
-		 */
 	}
 
 	/************************************************************************
@@ -244,9 +218,8 @@ class Player {
 
 		while (!openSet.isEmpty()) {
 			PathNode cur = getBestPathNode(openSet);
-			//System.err.println("  A* Cur = " + cur);
+			// System.err.println(" A* Cur = " + cur);
 			if (cur.pos.x == target.x && cur.pos.y == target.y) { return firstMove(cur); }
-
 
 			openSet.remove(cur);
 			closedSet.add(cur);
@@ -255,7 +228,7 @@ class Player {
 			Coord back = backPos(cur.pos, cur.orientation);
 			if (front.isInsideMap() && mineMap[front.x][front.y]) continue;
 			if (back.isInsideMap() && mineMap[back.x][back.y]) continue;
-			
+
 			Coord nextPos = cur.pos.neighbor(cur.orientation);
 			if (!nextPos.isInsideMap()) continue;
 
@@ -354,6 +327,26 @@ class Player {
 			}
 		}
 		return res;
+	}
+
+	/**
+	 * Renvoie le bon mouvement lorsque le ship est contre un mur (next position
+	 * outside map)
+	 */
+	private static String getMoveAgainstWall(Ship ship, int turn) {
+		if (ship.pos.y == 0 && ship.orientation == 1) return "STARBOARD";
+		if (ship.pos.y == 0 && ship.orientation == 2) return "PORT";
+
+		if (ship.pos.y == MAP_HEIGHT - 1 && ship.orientation == 4) return "STARBOARD";
+		if (ship.pos.y == MAP_HEIGHT - 1 && ship.orientation == 5) return "PORT";
+
+		if (ship.pos.x == 0 && ship.orientation == 2) return "STARBOARD";
+		if (ship.pos.x == 0 && ship.orientation == 4) return "PORT";
+
+		if (ship.pos.x == MAP_WIDTH - 1 && ship.orientation == 5) return "STARBOARD";
+		if (ship.pos.x == MAP_WIDTH - 1 && ship.orientation == 1) return "PORT";
+
+		return (turn % 2 == 0) ? "PORT" : "STARBOARD";
 	}
 
 	/*****************************************************************

@@ -1,0 +1,9 @@
+Done
+-> MoveTo avec check mine
+
+Not OK
+-> Comportement quand targeted & speed = 1
+-> Comportement quand mvt naturel nous envoie vers outside
+
+Not done
+-> Speed > 1
